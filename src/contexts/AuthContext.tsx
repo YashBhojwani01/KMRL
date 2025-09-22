@@ -110,7 +110,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (userData: SignupData) => {
     try {
       setIsLoading(true);
+      console.log('API_BASE_URL:', API_BASE_URL);
       console.log('Attempting signup to:', `${API_BASE_URL}/auth/signup`);
+      console.log('User data:', userData);
       
       const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
@@ -121,9 +123,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       console.log('Signup response status:', response.status);
+      console.log('Signup response headers:', response.headers);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+        console.log('Signup error data:', errorData);
         throw new Error(errorData.message || 'Signup failed');
       }
 
@@ -139,7 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Signup error:', error);
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('Cannot connect to server. Please make sure the backend is running on port 3001.');
+        throw new Error(`Cannot connect to server at ${API_BASE_URL}. Please make sure the backend is running on port 3001.`);
       }
       throw error;
     } finally {

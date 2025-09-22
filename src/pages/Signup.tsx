@@ -65,6 +65,16 @@ const Signup: React.FC = () => {
       return;
     }
 
+    if (formData.phone && formData.phone.length > 50) {
+      setError('Phone number must be 50 characters or less');
+      return;
+    }
+
+    if (formData.employeeId && formData.employeeId.length > 50) {
+      setError('Employee ID must be 50 characters or less');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
