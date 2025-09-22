@@ -39,7 +39,7 @@ const mockAuditLogs = [
     action: "Document Viewed",
     document: "Safety Protocol Update - Platform Edge Doors",
     user: "Ravi Chandran",
-    role: "Station Controller",
+    role: "Employee",
     timestamp: "2024-01-11 09:45:12",
     details: "Accessed document summary for shift briefing",
     status: "normal",

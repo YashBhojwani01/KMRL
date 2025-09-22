@@ -14,7 +14,7 @@ const mockDocuments = [
     category: "Financial Report",
     urgency: "high" as const,
     date: "10/01/2024",
-    author: "Rajesh Kumar",
+    author: "System User",
     summary: "Comprehensive quarterly financial analysis showing 12% revenue growth and operational improvements across all metro lines.",
     language: "english" as const,
     fileType: "PDF",

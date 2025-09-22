@@ -1,12 +1,27 @@
 import { useState } from "react";
-import { Search, Bell, MessageCircle, User, Settings } from "lucide-react";
+import { Search, Bell, MessageCircle, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NotificationPanel } from "./NotificationPanel";
+import { useAuth } from "../contexts/AuthContext";
+import { NavLink } from "react-router-dom";
 
 export const Header = () => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="relative">
@@ -52,13 +67,40 @@ export const Header = () => {
               <Settings className="h-5 w-5" />
             </Button>
             <div className="flex items-center space-x-3 pl-3 border-l border-slate-200">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="text-sm">
-                <p className="font-semibold text-slate-900">Rajesh Kumar</p>
-                <p className="text-slate-600">Station Controller</p>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="p-2 h-auto">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                          {user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-slate-900">
+                          {user ? user.name : 'Loading...'}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {user ? user.department : 'Loading...'}
+                        </p>
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <NavLink to="/profile" className="flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      <span>Profile Settings</span>
+                    </NavLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
