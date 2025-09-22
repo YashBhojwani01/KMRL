@@ -5,7 +5,9 @@ import { DocumentDetailModal } from "@/components/DocumentDetailModal";
 import { Search, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
+// Mock documents - now using centralized data from useDashboardData
 const mockDocuments = [
   {
     id: "1",
@@ -70,14 +72,15 @@ const mockDocuments = [
 ];
 
 const DocumentFeed = () => {
+  const { documents } = useDashboardData();
   const [selectedDocument, setSelectedDocument] = useState<
-    (typeof mockDocuments)[0] | null
+    (typeof documents)[0] | null
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
-  const handleDocumentClick = (document: typeof mockDocuments[0]) => {
+  const handleDocumentClick = (document: typeof documents[0]) => {
     setSelectedDocument(document);
     setIsModalOpen(true);
   };
@@ -133,7 +136,7 @@ const DocumentFeed = () => {
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-slate-600 font-medium">Total Documents:</span>
-                  <span className="text-sm font-bold text-slate-900">4</span>
+                  <span className="text-sm font-bold text-slate-900">{documents.length}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-slate-600 font-medium">Showing:</span>
@@ -152,7 +155,7 @@ const DocumentFeed = () => {
 
           {/* Document Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {mockDocuments.map((doc) => (
+            {documents.map((doc) => (
               <DocumentCard
                 key={doc.id}
                 {...doc}

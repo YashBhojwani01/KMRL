@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,14 +12,14 @@ import {
   FileText, 
   Search, 
   Filter,
-  Eye,
   GitBranch,
   Lock,
   CheckCircle,
   AlertCircle,
-  Calendar,
-  Download
+  Calendar
 } from "lucide-react";
+import { ExportLogsButton, ViewDetailsButton, CompareVersionsButton } from "@/utils/buttonUtils";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const mockAuditLogs = [
   {
@@ -95,6 +94,7 @@ const statusIcons = {
 };
 
 const AuditTraceability = () => {
+  const { handleExportLogs, handleViewAuditDetails, handleCompareVersions } = useDashboardData();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterUser, setFilterUser] = useState("all");
   const [filterAction, setFilterAction] = useState("all");
@@ -235,8 +235,9 @@ const AuditTraceability = () => {
 
             {/* Audit Logs */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Audit History</CardTitle>
+                <ExportLogsButton onClick={handleExportLogs} />
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -275,15 +276,13 @@ const AuditTraceability = () => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-3 w-3 mr-1" />
-                              View Details
-                            </Button>
+                            <ViewDetailsButton 
+                              onClick={() => handleViewAuditDetails(log.id)}
+                            />
                             {log.action === "Document Edited" && (
-                              <Button variant="ghost" size="sm">
-                                <GitBranch className="h-3 w-3 mr-1" />
-                                Compare Versions
-                              </Button>
+                              <CompareVersionsButton 
+                                onClick={() => handleCompareVersions(log.id)}
+                              />
                             )}
                           </div>
                         </div>

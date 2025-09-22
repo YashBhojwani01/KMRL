@@ -3,31 +3,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 export const DueWork = () => {
-  const dueWorkItems = [
-    {
-      category: "Due Today",
-      count: 3,
-      status: "Action Needed",
-      statusColor: "bg-orange-100 text-orange-800 border-orange-200",
-      buttonColor: "bg-orange-500 hover:bg-orange-600 text-white"
-    },
-    {
-      category: "Due This Week",
-      count: 8,
-      status: "On Track",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-      buttonColor: "bg-blue-500 hover:bg-blue-600 text-white"
-    },
-    {
-      category: "Overdue",
-      count: 1,
-      status: "Late",
-      statusColor: "bg-red-100 text-red-800 border-red-200",
-      buttonColor: "bg-red-500 hover:bg-red-600 text-white"
-    }
-  ];
+  const { dueWorkItems, completionRate } = useDashboardData();
 
   return (
     <Card className="shadow-sm">
@@ -45,9 +24,9 @@ export const DueWork = () => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-600">Completion Rate</span>
-            <span className="text-lg font-bold text-gray-900">85%</span>
+            <span className="text-lg font-bold text-gray-900">{completionRate}%</span>
           </div>
-          <Progress value={85} className="h-2" />
+          <Progress value={completionRate} className="h-2" />
         </div>
 
         {/* Due Work Items */}

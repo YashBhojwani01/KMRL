@@ -1,8 +1,10 @@
-import { Calendar, User, Eye, FileText, AlertCircle, Clock, Download, Bot, FileType, FileSpreadsheet } from "lucide-react";
+import { Calendar, User, FileText, AlertCircle, Clock, FileType, FileSpreadsheet } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ViewButton, DownloadButton, AskAIButton } from "@/utils/buttonUtils";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 interface DocumentCardProps {
   id: string;
@@ -76,6 +78,8 @@ export const DocumentCard = ({
   contentTags,
   onClick
 }: DocumentCardProps & { onClick?: () => void }) => {
+  const { handleDocumentView, handleDocumentDownload, handleDocumentAskAI } = useDashboardData();
+  
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -148,32 +152,15 @@ export const DocumentCard = ({
         {/* Action Buttons */}
         <div className="space-y-4 pt-2">
           <div className="flex items-center space-x-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-white hover:bg-blue-50 text-slate-700 border-slate-300 hover:border-blue-400 hover:text-blue-700 font-medium px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-white hover:bg-blue-50 text-slate-700 border-slate-300 hover:border-blue-400 hover:text-blue-700 font-medium px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Bot className="h-4 w-4 mr-2" />
-              Ask AI
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-white hover:bg-blue-50 text-slate-700 border-slate-300 hover:border-blue-400 hover:text-blue-700 px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <ViewButton 
+              onClick={() => handleDocumentView(id)}
+            />
+            <AskAIButton 
+              onClick={() => handleDocumentAskAI(id)}
+            />
+            <DownloadButton 
+              onClick={() => handleDocumentDownload(id)}
+            />
           </div>
           
           {/* Feedback Buttons */}

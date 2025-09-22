@@ -5,68 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  type: "user" | "assistant";
-  content: string;
-  timestamp: string;
-}
-
-const sampleMessages: Message[] = [
-  {
-    id: "1",
-    type: "assistant",
-    content: "Hello! I'm your KMRL Document Intelligence Assistant. I can help you find information about safety protocols, maintenance records, compliance reports, and more. What would you like to know?",
-    timestamp: "10:30 AM"
-  },
-  {
-    id: "2",
-    type: "user",
-    content: "What were the key takeaways from the last board meeting?",
-    timestamp: "10:32 AM"
-  },
-  {
-    id: "3",
-    type: "assistant",
-    content: "Based on the December 2023 board meeting minutes, here are the key takeaways:\n\n• Budget approval for Phase 2 extension (₹2,400 crores)\n• New safety protocols for monsoon operations\n• Digital ticketing system upgrade scheduled for Q2 2024\n• Staff training program for AI document platform\n\nWould you like me to provide more details on any of these points?",
-    timestamp: "10:32 AM"
-  }
-];
-
-const quickQuestions = [
-  "Show me today's safety bulletins",
-  "Any pending vendor payments?",
-  "Latest maintenance schedules",
-  "Compliance status overview"
-];
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 export const ChatAssistant = () => {
-  const [messages, setMessages] = useState<Message[]>(sampleMessages);
+  const { chatMessages, quickQuestions, addChatMessage } = useDashboardData();
   const [newMessage, setNewMessage] = useState("");
   const [isMinimized, setIsMinimized] = useState(false);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
+      addChatMessage({
         type: "user",
-        content: newMessage,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      setMessages([...messages, userMessage]);
+        content: newMessage
+      });
       setNewMessage("");
       
       // Simulate AI response
       setTimeout(() => {
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
+        addChatMessage({
           type: "assistant",
-          content: "I'm processing your request and searching through the document repository. Let me find the most relevant information for you.",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages(prev => [...prev, aiResponse]);
+          content: "I'm processing your request and searching through the document repository. Let me find the most relevant information for you."
+        });
       }, 1000);
     }
   };
@@ -106,7 +65,7 @@ export const ChatAssistant = () => {
         <CardContent className="space-y-4">
           {/* Messages */}
           <div className="h-48 overflow-y-auto space-y-3 pr-2">
-            {messages.map((message) => (
+            {chatMessages.map((message) => (
               <div
                 key={message.id}
                 className={cn(

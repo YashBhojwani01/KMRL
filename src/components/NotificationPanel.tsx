@@ -1,66 +1,23 @@
-import { useState } from "react";
-import { AlertTriangle, Clock, CheckCircle, X, Bell } from "lucide-react";
+import { X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { renderIcon } from "@/utils/iconUtils";
 
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const mockNotifications = [
-  {
-    id: 1,
-    title: "Urgent: Budget Approval Required",
-    message: "Q1 infrastructure budget approval is pending. Deadline: Jan 18, 2024",
-    type: "urgent",
-    time: "2 hours ago",
-    read: false
-  },
-  {
-    id: 2,
-    title: "Safety Audit Completed",
-    message: "Monthly safety audit for all 22 stations has been completed successfully.",
-    type: "success",
-    time: "4 hours ago",
-    read: false
-  },
-  {
-    id: 3,
-    title: "Training Session Reminder",
-    message: "Mandatory safety training session scheduled for tomorrow at 2:00 PM",
-    type: "reminder",
-    time: "1 day ago",
-    read: true
-  }
-];
-
 export const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { 
+    notifications, 
+    markNotificationAsRead, 
+    markAllNotificationsAsRead, 
+    getNotificationIcon, 
+    getNotificationColor 
+  } = useDashboardData();
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'urgent': return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      case 'success': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'reminder': return <Clock className="h-4 w-4 text-blue-600" />;
-      default: return <Bell className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'urgent': return 'border-l-red-500 bg-red-50';
-      case 'success': return 'border-l-green-500 bg-green-50';
-      case 'reminder': return 'border-l-blue-500 bg-blue-50';
-      default: return 'border-l-gray-500 bg-gray-50';
-    }
-  };
-
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(notif => 
-      notif.id === id ? { ...notif, read: true } : notif
-    ));
-  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -89,11 +46,11 @@ export const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) =
               className={`p-4 border-l-4 cursor-pointer hover:bg-slate-50 transition-colors ${getNotificationColor(notification.type)} ${
                 !notification.read ? 'bg-slate-50' : 'bg-white'
               }`}
-              onClick={() => markAsRead(notification.id)}
+              onClick={() => markNotificationAsRead(notification.id)}
             >
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0 mt-0.5">
-                  {getNotificationIcon(notification.type)}
+                  {renderIcon(getNotificationIcon(notification.type).iconType, getNotificationIcon(notification.type).iconClass)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -118,7 +75,12 @@ export const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) =
 
         {/* Footer */}
         <div className="p-3 border-t border-slate-200 bg-slate-50">
-          <Button variant="ghost" size="sm" className="w-full text-xs text-slate-600 hover:text-slate-900">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full text-xs text-slate-600 hover:text-slate-900"
+            onClick={markAllNotificationsAsRead}
+          >
             Mark all as read
           </Button>
         </div>

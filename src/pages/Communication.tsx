@@ -1,8 +1,7 @@
-import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { AddThreadButton } from "@/utils/buttonUtils";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import {
   Card,
   CardContent,
@@ -12,15 +11,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -70,6 +60,7 @@ const mockMessages: Message[] = [
 ];
 
 export const CrossDepartmentCommunication = ({ userRole, language }: CommunicationProps) => {
+  const { handleAddThread } = useDashboardData();
   const isMalayalam = language === "ml";
 
   const localizedContent = {
@@ -101,7 +92,7 @@ export const CrossDepartmentCommunication = ({ userRole, language }: Communicati
               <Input type="search" placeholder="Search threads..." className="pl-10" />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             </div>
-            <Button>+ New Thread</Button>
+            <AddThreadButton onClick={handleAddThread} />
           </div>
           <ScrollArea className="h-[600px] w-full rounded-md border">
             <div className="p-4">
@@ -133,9 +124,9 @@ export const CrossDepartmentCommunication = ({ userRole, language }: Communicati
                       <AvatarFallback>EM</AvatarFallback>
                     </Avatar>
                     <Input type="text" placeholder="Add Comment" className="ml-2" />
-                    <Button variant="ghost" className="ml-2 p-2">
+                    <button className="ml-2 p-2 bg-transparent hover:bg-gray-200 rounded">
                       <Send className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </CardFooter>
                 </Card>
               ))}

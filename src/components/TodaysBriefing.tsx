@@ -1,9 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Volume2, TrendingUp } from 'lucide-react';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { renderIcon } from '@/utils/iconUtils';
 
 export const TodaysBriefing = () => {
+  const { briefingItems } = useDashboardData();
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center space-y-0 pb-3">
@@ -16,41 +20,25 @@ export const TodaysBriefing = () => {
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Main Briefing */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs font-medium text-slate-700">Positive Trend</span>
-            <Button size="sm" variant="ghost" className="ml-auto h-6 w-6 p-0 text-blue-600 hover:bg-blue-50">
-              <Volume2 className="h-3 w-3" />
-            </Button>
+        {briefingItems.map((item, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${
+                item.type === 'positive' ? 'bg-green-500' : 
+                item.type === 'completed' ? 'bg-green-500' : 'bg-orange-500'
+              }`}></div>
+              <span className="text-xs font-medium text-slate-700">{item.title}</span>
+              {item.type === 'positive' && (
+                <Button size="sm" variant="ghost" className="ml-auto h-6 w-6 p-0 text-blue-600 hover:bg-blue-50">
+                  <Volume2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {item.description}
+            </p>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Document processing efficiency increased by 15% this week. Automation features are reducing manual workload effectively. 
-            Staff training completion rate improved to 89% with new digital modules.
-          </p>
-        </div>
-
-        {/* Key Updates */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="h-3 w-3 text-green-600" />
-            <span className="text-xs font-medium text-slate-700">Completed</span>
-          </div>
-          <p className="text-xs text-slate-600">
-            Safety audit completed for all 22 stations. Quality score: 98%
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="h-3 w-3 text-orange-600" />
-            <span className="text-xs font-medium text-slate-700">Attention Required</span>
-          </div>
-          <p className="text-xs text-slate-600">
-            Budget approval pending for Q1 infrastructure upgrades. Deadline: Jan 18
-          </p>
-        </div>
+        ))}
       </CardContent>
     </Card>
   );

@@ -3,65 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, AlertCircle, CheckCircle } from 'lucide-react';
-
-interface CalendarEvent {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  type: 'meeting' | 'deadline' | 'training' | 'reminder';
-  priority: 'urgent' | 'high' | 'medium' | 'low';
-  description?: string;
-}
-
-const mockEvents: CalendarEvent[] = [
-  {
-    id: 1,
-    title: "Safety Protocol Review",
-    date: "2024-01-15",
-    time: "10:00 AM",
-    type: "meeting",
-    priority: "high",
-    description: "Monthly safety protocol review meeting"
-  },
-  {
-    id: 2,
-    title: "Budget Approval Deadline",
-    date: "2024-01-18",
-    time: "5:00 PM",
-    type: "deadline",
-    priority: "urgent",
-    description: "Q1 infrastructure budget approval deadline"
-  },
-  {
-    id: 3,
-    title: "Staff Training Session",
-    date: "2024-01-20",
-    time: "2:00 PM",
-    type: "training",
-    priority: "medium",
-    description: "Mandatory safety training for all staff"
-  },
-  {
-    id: 4,
-    title: "Monthly Report Submission",
-    date: "2024-01-25",
-    time: "12:00 PM",
-    type: "deadline",
-    priority: "high",
-    description: "Submit monthly operational report"
-  },
-  {
-    id: 5,
-    title: "Vendor Meeting",
-    date: "2024-01-28",
-    time: "3:00 PM",
-    type: "meeting",
-    priority: "medium",
-    description: "Meet with electrical components vendor"
-  }
-];
+import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { renderIcon } from '@/utils/iconUtils';
 
 interface FullCalendarProps {
   isOpen: boolean;
@@ -71,6 +15,7 @@ interface FullCalendarProps {
 export const FullCalendar = ({ isOpen, onClose }: FullCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { calendarEvents, getPriorityColor, getTypeIcon } = useDashboardData();
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -96,27 +41,7 @@ export const FullCalendar = ({ isOpen, onClose }: FullCalendarProps) => {
   };
 
   const getEventsForDate = (date: string) => {
-    return mockEvents.filter(event => event.date === date);
-  };
-
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case 'meeting': return <Calendar className="h-3 w-3" />;
-      case 'deadline': return <AlertCircle className="h-3 w-3" />;
-      case 'training': return <CheckCircle className="h-3 w-3" />;
-      case 'reminder': return <Clock className="h-3 w-3" />;
-      default: return <Calendar className="h-3 w-3" />;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-500';
-      case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-blue-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
+    return calendarEvents.filter(event => event.date === date);
   };
 
   const formatDate = (date: Date) => {
@@ -250,7 +175,7 @@ export const FullCalendar = ({ isOpen, onClose }: FullCalendarProps) => {
                         <div key={event.id} className="p-3 border rounded-lg hover:bg-slate-50">
                           <div className="flex items-start space-x-3">
                             <div className={`p-1 rounded-full ${getPriorityColor(event.priority)}`}>
-                              {getEventIcon(event.type)}
+                              {renderIcon(getTypeIcon(event.type).iconType, getTypeIcon(event.type).iconClass)}
                             </div>
                             <div className="flex-1">
                               <h4 className="font-medium text-slate-900">{event.title}</h4>
