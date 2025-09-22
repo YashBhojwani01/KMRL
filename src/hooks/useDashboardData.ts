@@ -1,5 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { renderIcon } from '@/utils/iconUtils';
+import EmailApiService from '@/services/emailApiService';
+import { EmailDataTransformer } from '@/services/emailDataTransformer';
+import { BackendEmailData, FrontendEmailData } from '@/services/emailApiService';
 
 // Types for dashboard data
 export interface Metric {
@@ -139,6 +142,18 @@ export interface DashboardData {
 }
 
 export const useDashboardData = () => {
+  // State for email data
+  const [emailData, setEmailData] = useState<FrontendEmailData[]>([]);
+  const [emailStats, setEmailStats] = useState<any>(null);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [isChatModalOpen, setChatModalOpen] = useState(false);
+  const [chatDocument, setChatDocument] = useState<any | null>(null);
+
+  // Email API service
+  const emailApiService = EmailApiService.getInstance();
+
   // Initial data
   const [data] = useState<DashboardData>({
     metrics: [
@@ -515,6 +530,134 @@ export const useDashboardData = () => {
   const [notifications, setNotifications] = useState<Notification[]>(data.notifications);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(data.chatMessages);
 
+  // Email data fetching functions
+  const fetchEmailData = useCallback(async (userId: string) => {
+    if (!userId) {
+      console.log('❌ No userId provided to fetchEmailData');
+      return;
+    }
+    
+    // Prevent multiple simultaneous calls
+    if (isLoadingEmails) {
+      console.log('⏳ Email fetch already in progress, skipping...');
+      return;
+    }
+    
+    console.log('🔄 Starting email data fetch for user:', userId);
+    setIsLoadingEmails(true);
+    setEmailError(null);
+    
+    try {
+      console.log('🔄 Fetching email data for user:', userId);
+      
+      // Fetch email data from backend
+      const backendEmails = await emailApiService.fetchUserEmails(userId, 50);
+      console.log('📧 Fetched emails from backend:', backendEmails.length);
+      
+      // Transform backend data to frontend format using Gemini AI
+      const transformedEmails = await EmailDataTransformer.transformEmailDataList(backendEmails);
+      console.log('🔄 Transformed emails for frontend:', transformedEmails.length);
+      
+      setEmailData(transformedEmails);
+
+      // Generate calendar events from email data
+      const events = transformedEmails
+        .filter(email => email.deadlineDate)
+        .map(email => ({
+          id: email.id,
+          title: email.title,
+          date: email.deadlineDate,
+          time: new Date(email.deadlineDate!).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          priority: email.urgency,
+          type: email.category.toLowerCase().replace(' document', ''),
+          description: email.summary,
+        }));
+      setCalendarEvents(events);
+      
+      // Generate tasks from email action items
+      const aiTasks = transformedEmails
+        .flatMap((email: any) => 
+          (email.actionItems || []).map((item: string, index: number) => ({
+            id: `${email.id}-task-${index}`,
+            text: item,
+            completed: email.status === 'completed',
+            priority: email.urgency,
+            category: email.category,
+            dueDate: email.deadlineDate,
+          }))
+        )
+        .sort((a: any, b: any) => {
+          const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+      setTasks(aiTasks);
+
+      // Fetch email statistics
+      const stats = await emailApiService.fetchEmailStats(userId);
+      setEmailStats(stats);
+      
+      console.log('✅ Email data loaded successfully');
+      
+    } catch (error) {
+      console.error('❌ Error fetching email data:', error);
+      setEmailError(error instanceof Error ? error.message : 'Failed to fetch email data');
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  }, [isLoadingEmails]);
+
+  const triggerEmailReading = useCallback(async (userId: string) => {
+    if (!userId) return;
+    
+    try {
+      console.log('🚀 Triggering email reading for user:', userId);
+      const result = await emailApiService.triggerEmailReading(userId);
+      console.log('✅ Email reading triggered:', result);
+      
+      // Refresh email data after triggering
+      await fetchEmailData(userId);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Error triggering email reading:', error);
+      throw error;
+    }
+  }, [fetchEmailData]);
+
+  const handleDocumentAskAI = useCallback((documentId: string) => {
+    const doc = emailData.find(d => d.id === documentId);
+    if (doc) {
+      setChatDocument(doc);
+      setChatModalOpen(true);
+    }
+  }, [emailData]);
+
+  const closeChatModal = () => {
+    setChatModalOpen(false);
+    setChatDocument(null);
+  };
+
+  // Auto-fetch email data when component mounts (if user is available)
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const authUser = localStorage.getItem('auth_user');
+    
+    console.log('🔍 Checking for user authentication...');
+    console.log('User ID from localStorage:', userId);
+    console.log('Auth user from localStorage:', authUser);
+    
+    if (userId && !isLoadingEmails && emailData.length === 0) {
+      console.log('✅ User ID found, fetching email data...');
+      fetchEmailData(userId);
+    } else if (!userId) {
+      console.log('❌ No user ID found, skipping email fetch');
+    } else if (isLoadingEmails) {
+      console.log('⏳ Email fetch already in progress...');
+    } else if (emailData.length > 0) {
+      console.log('📧 Email data already loaded, skipping fetch');
+    }
+  }, [fetchEmailData, isLoadingEmails, emailData.length]);
+
   const handleTaskComplete = useCallback((taskId: number) => {
     setTasks(prevTasks => 
       prevTasks.map(task => 
@@ -573,10 +716,6 @@ export const useDashboardData = () => {
     // This would trigger the download
   }, []);
 
-  const handleDocumentAskAI = useCallback((documentId: string) => {
-    console.log(`Asking AI about document ${documentId}`);
-    // This would open AI chat for the document
-  }, []);
 
   // Communication management functions
   const handleAddThread = useCallback(() => {
@@ -697,17 +836,29 @@ export const useDashboardData = () => {
     urgentActions: data.urgentActions,
     briefingItems: data.briefingItems,
     dueWorkItems: data.dueWorkItems,
-    calendarEvents: data.calendarEvents,
+    calendarEvents,
     tasks,
     weeklyUpdates: data.weeklyUpdates,
     notifications,
     chatMessages,
     quickQuestions: data.quickQuestions,
-    documents: data.documents,
+    documents: emailData, // Use real email data if available
     communicationThreads: data.communicationThreads,
     auditLogs: data.auditLogs,
     completionRate: data.completionRate,
     
+    // Email data state
+    emailData,
+    emailStats,
+    isLoadingEmails,
+    emailError,
+    handleDocumentView: (id: string) => console.log('View', id),
+    handleDocumentDownload: (id: string) => console.log('Download', id),
+    handleDocumentAskAI,
+    closeChatModal,
+    isChatModalOpen,
+    chatDocument,
+
     // Actions
     handleTaskComplete,
     handleTaskAcknowledge,
@@ -715,9 +866,6 @@ export const useDashboardData = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     addChatMessage,
-    handleDocumentView,
-    handleDocumentDownload,
-    handleDocumentAskAI,
     handleAddThread,
     handleExportLogs,
     handleViewAuditDetails,
@@ -725,6 +873,10 @@ export const useDashboardData = () => {
     handleAddEvent,
     handleExportEvents,
     handleQuickResolve,
+    
+    // Email actions
+    fetchEmailData,
+    triggerEmailReading,
     
     // Utilities
     renderIcon,

@@ -23,7 +23,7 @@ class EmailController {
             console.log(`Reading top 5 emails for user ${userId} from ${start} to ${end}`);
 
             // Extract emails from Gmail (limit to top 5)
-            const emails = await this.emailService.extractEmails(start, end, 5);
+            const emails = await this.emailService.extractEmails(start, end, 6);
             
             if (!emails || emails.length === 0) {
                 return res.status(200).json({

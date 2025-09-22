@@ -8,6 +8,9 @@ import {
   CheckCircle,
   AlertTriangle,
   Calendar,
+  Book,
+  Settings,
+  Shield,
 } from "lucide-react";
 
 type IconType =
@@ -19,7 +22,14 @@ type IconType =
   | "DollarSign"
   | "CheckCircle"
   | "AlertTriangle"
-  | "Calendar";
+  | "Calendar"
+  | "document"
+  | "clock"
+  | "shield"
+  | "trend"
+  | "book"
+  | "settings"
+  | "alert-triangle";
 
 export const renderIcon = (iconType: IconType, iconClass: string) => {
   switch (iconType) {
@@ -40,6 +50,21 @@ export const renderIcon = (iconType: IconType, iconClass: string) => {
     case "AlertTriangle":
       return <AlertTriangle className={iconClass} />;
     case "Calendar":
+      return <Calendar className={iconClass} />;
+    case "document":
+      return <FileText className={iconClass} />;
+    case "clock":
+      return <Clock3 className={iconClass} />;
+    case "shield":
+      return <Shield className={iconClass} />;
+    case "trend":
+      return <TrendingUp className={iconClass} />;
+    case "book":
+      return <Book className={iconClass} />;
+    case "settings":
+      return <Settings className={iconClass} />;
+    case "alert-triangle":
+      return <AlertTriangle className={iconClass} />;
     default:
       return <Calendar className={iconClass} />;
   }

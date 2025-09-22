@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { DocumentCard } from "@/components/DocumentCard";
 import { DocumentDetailModal } from "@/components/DocumentDetailModal";
+import { DocumentChatModal } from "@/components/DocumentChatModal";
+import { EmailStatusIndicator } from "@/components/EmailStatusIndicator";
 import { Search, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Mock documents - now using centralized data from useDashboardData
+// Mock documents - fallback when no email data is available
 const mockDocuments = [
   {
     id: "1",
@@ -72,7 +75,20 @@ const mockDocuments = [
 ];
 
 const DocumentFeed = () => {
-  const { documents } = useDashboardData();
+  const { user } = useAuth();
+  const { 
+    documents, 
+    emailData, 
+    emailStats, 
+    isLoadingEmails, 
+    emailError, 
+    fetchEmailData, 
+    triggerEmailReading, 
+    isChatModalOpen,
+    chatDocument,
+    closeChatModal,
+  } = useDashboardData();
+  
   const [selectedDocument, setSelectedDocument] = useState<
     (typeof documents)[0] | null
   >(null);
@@ -83,6 +99,26 @@ const DocumentFeed = () => {
   const handleDocumentClick = (document: typeof documents[0]) => {
     setSelectedDocument(document);
     setIsModalOpen(true);
+  };
+
+  const handleEmailRefresh = async () => {
+    if (user?.id) {
+      try {
+        await triggerEmailReading(user.id);
+      } catch (error) {
+        console.error('Failed to refresh emails:', error);
+      }
+    }
+  };
+
+  const handleEmailFetch = async () => {
+    if (user?.id) {
+      try {
+        await fetchEmailData(user.id);
+      } catch (error) {
+        console.error('Failed to fetch emails:', error);
+      }
+    }
   };
 
   const handleCloseModal = () => {
@@ -101,7 +137,28 @@ const DocumentFeed = () => {
             <div className="text-center">
               <h1 className="text-4xl font-bold text-slate-900 mb-2">Document Feed</h1>
               <p className="text-slate-600 text-lg">Recent documents processed by the AI system</p>
+              
+            {/* Email Status Indicator */}
+            <div className="mt-4 flex justify-center">
+              <EmailStatusIndicator
+                isLoading={isLoadingEmails}
+                emailCount={emailData.length}
+                error={emailError}
+                onRefresh={handleEmailRefresh}
+              />
             </div>
+            
+            {/* Loading State */}
+            {isLoadingEmails && (
+              <div className="flex justify-center items-center py-8">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <span className="text-slate-600">Loading email data...</span>
+                </div>
+              </div>
+            )}
+            </div>
+            
             
             {/* Search and Date Inputs */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
@@ -136,7 +193,7 @@ const DocumentFeed = () => {
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-slate-600 font-medium">Total Documents:</span>
-                  <span className="text-sm font-bold text-slate-900">{documents.length}</span>
+                  <span className="text-sm font-bold text-slate-900">{documents.length > 0 ? documents.length : mockDocuments.length}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-slate-600 font-medium">Showing:</span>
@@ -154,15 +211,39 @@ const DocumentFeed = () => {
           </div>
 
           {/* Document Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {documents.map((doc) => (
-              <DocumentCard
-                key={doc.id}
-                {...doc}
-                onClick={() => handleDocumentClick(doc)}
-              />
-            ))}
-          </div>
+          {!isLoadingEmails && emailData.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-slate-400 mb-4">
+                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No emails found</h3>
+              <p className="text-slate-500 mb-4">No relevant emails have been processed yet.</p>
+              <Button onClick={handleEmailFetch} variant="outline">
+                Refresh Email Data
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+              {(documents.length > 0 ? documents : mockDocuments).map((doc) => {
+                const displayedDocuments = documents.length > 0 ? documents : mockDocuments;
+                return (
+                  <DocumentCard
+                    key={doc.id}
+                    document={doc}
+                    onClick={() => handleDocumentClick(doc as any)}
+                    onView={(documentId) => {
+                      const document = displayedDocuments.find(d => d.id === documentId);
+                      if (document) {
+                        handleDocumentClick(document as any);
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
 
@@ -171,6 +252,12 @@ const DocumentFeed = () => {
         document={selectedDocument}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+      />
+
+      <DocumentChatModal
+        isOpen={isChatModalOpen}
+        onClose={closeChatModal}
+        document={chatDocument}
       />
     </div>
   );

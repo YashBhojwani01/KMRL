@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import EmailApiService from '@/services/emailApiService';
 
 export interface User {
   id: string;
@@ -52,6 +53,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [emailApiService] = useState(() => {
+    try {
+      return EmailApiService.getInstance();
+    } catch (error) {
+      console.warn('Failed to initialize EmailApiService:', error);
+      return null;
+    }
+  });
 
   const isAuthenticated = !!user && !!token;
 
@@ -96,6 +105,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Store in localStorage
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
+      localStorage.setItem('userId', data.user.id);
+      
+      // Trigger email reading after successful login
+      if (emailApiService) {
+        try {
+          console.log('🚀 Triggering email reading after login for user:', data.user.id);
+          await emailApiService.triggerEmailReading(data.user.id);
+          console.log('✅ Email reading triggered successfully');
+        } catch (emailError) {
+          console.warn('⚠️ Failed to trigger email reading:', emailError);
+          // Don't fail login if email reading fails
+        }
+      } else {
+        console.warn('⚠️ EmailApiService not available. Skipping email reading.');
+      }
     } catch (error) {
       console.error('Login error:', error);
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
@@ -140,6 +164,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Store in localStorage
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
+      localStorage.setItem('userId', data.user.id);
+      
+      // Trigger email reading after successful signup
+      if (emailApiService) {
+        try {
+          console.log('🚀 Triggering email reading after signup for user:', data.user.id);
+          await emailApiService.triggerEmailReading(data.user.id);
+          console.log('✅ Email reading triggered successfully');
+        } catch (emailError) {
+          console.warn('⚠️ Failed to trigger email reading:', emailError);
+          // Don't fail signup if email reading fails
+        }
+      } else {
+        console.warn('⚠️ EmailApiService not available. Skipping email reading.');
+      }
     } catch (error) {
       console.error('Signup error:', error);
       if (error instanceof TypeError && error.message === 'Failed to fetch') {

@@ -39,6 +39,11 @@ interface DocumentDetailProps {
     fileSize?: string;
     status?: string;
     contentTags?: string[];
+    implementationTime?: string;
+    affectedStations?: string;
+    actionItems?: string[];
+    keyPoints?: string[];
+    body?: string;
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -120,7 +125,28 @@ export const DocumentDetailModal = ({ document, isOpen, onClose }: DocumentDetai
 
   if (!document) return null;
 
-  const currentContent = mockDetailedSummary[selectedLanguage];
+  // Generate content from real email data
+  const generateRealContent = () => {
+    return {
+      title: document.title,
+      summary: document.keyPoints?.slice(0, 4) || [
+        document.summary,
+        `Priority: ${document.urgency.toUpperCase()}`,
+        `Department: ${document.department}`,
+        `Status: ${document.status || 'Pending'}`
+      ],
+      fullContent: {
+        keyPoints: document.keyPoints || [document.summary],
+        actionItems: document.actionItems || [],
+        deadline: document.deadlineDate || 'No specific deadline',
+        priority: document.urgency.toUpperCase(),
+        affectedStations: document.affectedStations || 'Information not available',
+        estimatedImplementationTime: document.implementationTime || 'Not specified'
+      }
+    };
+  };
+
+  const currentContent = generateRealContent();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -258,58 +284,93 @@ export const DocumentDetailModal = ({ document, isOpen, onClose }: DocumentDetai
 
             <TabsContent value="fullDetails" className="space-y-6 mt-6">
               <div className="space-y-6">
-                {/* Detailed Key Points */}
-                <div>
-                  <h4 className="text-lg font-semibold text-slate-900 mb-4">Detailed Key Points:</h4>
-                  <ul className="space-y-3">
-                    {currentContent.fullContent.keyPoints.map((point, index) => (
-                      <li key={index} className="text-sm text-slate-600 flex items-start space-x-3 leading-relaxed">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {/* Email Body Content */}
+                {document.body && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900 mb-4">Email Content:</h4>
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                      <div className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed max-h-60 overflow-y-auto">
+                        {document.body}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* AI-Extracted Key Points */}
+                {currentContent.fullContent.keyPoints.length > 0 && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900 mb-4">AI-Extracted Key Points:</h4>
+                    <ul className="space-y-3">
+                      {currentContent.fullContent.keyPoints.map((point, index) => (
+                        <li key={index} className="text-sm text-slate-600 flex items-start space-x-3 leading-relaxed">
+                          <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <Separator className="my-6" />
 
                 {/* Action Items */}
-                <div>
-                  <h4 className="text-lg font-semibold text-slate-900 mb-4">Action Items:</h4>
-                  <ul className="space-y-3">
-                    {currentContent.fullContent.actionItems.map((item, index) => (
-                      <li key={index} className="text-sm text-slate-600 flex items-start space-x-3 leading-relaxed">
-                        <AlertCircle className="w-4 h-4 text-orange-600 mt-1 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {currentContent.fullContent.actionItems.length > 0 && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900 mb-4">Action Items:</h4>
+                    <ul className="space-y-3">
+                      {currentContent.fullContent.actionItems.map((item, index) => (
+                        <li key={index} className="text-sm text-slate-600 flex items-start space-x-3 leading-relaxed">
+                          <AlertCircle className="w-4 h-4 text-orange-600 mt-1 flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-                {/* Summary Metadata */}
-                {selectedLanguage === "english" && currentContent.fullContent && 'priority' in currentContent.fullContent && (
-                  <>
-                    <Separator className="my-6" />
-                    <div className="grid grid-cols-2 gap-6 text-sm">
-                      <div>
-                        <span className="font-semibold text-slate-900">Priority:</span>
-                        <span className="ml-2 text-red-600 font-medium">{currentContent.fullContent.priority}</span>
-                      </div>
+                {/* Document Metadata */}
+                <Separator className="my-6" />
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <h4 className="text-lg font-semibold text-slate-900 mb-4">Document Metadata:</h4>
+                  <div className="grid grid-cols-2 gap-6 text-sm">
+                    <div>
+                      <span className="font-semibold text-slate-900">Priority:</span>
+                      <span className="ml-2 text-red-600 font-medium">{currentContent.fullContent.priority}</span>
+                    </div>
+                    {document.implementationTime && (
                       <div>
                         <span className="font-semibold text-slate-900">Implementation Time:</span>
-                        <span className="ml-2 text-slate-600">{currentContent.fullContent.estimatedImplementationTime}</span>
+                        <span className="ml-2 text-slate-600">{document.implementationTime}</span>
                       </div>
+                    )}
+                    {document.affectedStations && (
                       <div>
                         <span className="font-semibold text-slate-900">Affected Stations:</span>
-                        <span className="ml-2 text-slate-600">{currentContent.fullContent.affectedStations}</span>
+                        <span className="ml-2 text-slate-600">{document.affectedStations}</span>
                       </div>
-                      <div>
-                        <span className="font-semibold text-slate-900">Deadline:</span>
-                        <span className="ml-2 text-red-600 font-medium">{currentContent.fullContent.deadline}</span>
-                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold text-slate-900">Deadline:</span>
+                      <span className="ml-2 text-red-600 font-medium">{currentContent.fullContent.deadline}</span>
                     </div>
-                  </>
-                )}
+                    <div>
+                      <span className="font-semibold text-slate-900">Sender:</span>
+                      <span className="ml-2 text-slate-600">{document.author}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900">Category:</span>
+                      <span className="ml-2 text-slate-600">{document.category}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900">File Type:</span>
+                      <span className="ml-2 text-slate-600">{document.fileType || 'Email'}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900">Processing Status:</span>
+                      <span className="ml-2 text-slate-600">{document.status || 'Pending'}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 

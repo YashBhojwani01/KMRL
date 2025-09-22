@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ToDoTasks } from '@/components/ToDoTasks';
 import { WeeklyUpdate } from '@/components/WeeklyUpdate';
 import { Header } from "@/components/Header";
+import { DashboardChatbot } from '@/components/DashboardChatbot';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Index = () => {
@@ -69,6 +70,9 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Dashboard Chatbot */}
+      <DashboardChatbot />
     </div>
   );
 };
