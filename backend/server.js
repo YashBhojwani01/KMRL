@@ -6,8 +6,20 @@ const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 
-// Load environment variables
+// Load environment variables FIRST
 dotenv.config();
+
+// Debug: Check if environment variables are loaded
+console.log('Environment check:');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✓ Loaded' : '✗ Missing');
+console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '✓ Loaded' : '✗ Missing');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✓ Loaded' : '✗ Missing');
+
+// Import services after environment variables are loaded
+const emailRoutes = require('./routes/emailRoutes');
+const attachmentRoutes = require('./routes/attachmentRoutes');
+const emailProcessingRoutes = require('./routes/emailProcessingRoutes');
+const EmailTriggerService = require('./services/emailTriggerService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +35,9 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Initialize email trigger service
+const emailTriggerService = new EmailTriggerService();
+
 // Initialize database connection
 async function initDatabase() {
   try {
@@ -32,8 +47,13 @@ async function initDatabase() {
       throw error;
     }
     console.log('Supabase connected successfully');
+    
+    // Initialize attachment storage (non-blocking)
+    emailTriggerService.initializeStorage().catch(err => {
+      console.log('Storage initialization will be handled separately');
+    });
   } catch (error) {
-    console.error('Supabase connection failed:', error);
+    console.error('Database initialization failed:', error);
     process.exit(1);
   }
 }
@@ -69,7 +89,7 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = { id: decoded.userId, email: decoded.email, role: decoded.role };
     next();
   } catch (error) {
     return res.status(403).json({ message: 'Invalid or expired token' });
@@ -110,6 +130,15 @@ async function getUserById(id) {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Email routes
+app.use('/api/emails', emailRoutes);
+
+// Attachment routes
+app.use('/api/attachments', attachmentRoutes);
+
+// Email processing routes
+app.use('/api/email-processing', emailProcessingRoutes);
 
 // Signup
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
@@ -225,6 +254,15 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Trigger email reading in background (don't wait for completion)
+    emailTriggerService.triggerEmailReading(user.id)
+      .then(result => {
+        console.log(`Email reading result for user ${user.id}:`, result);
+      })
+      .catch(error => {
+        console.error(`Email reading failed for user ${user.id}:`, error);
+      });
 
     res.json({
       message: 'Login successful',

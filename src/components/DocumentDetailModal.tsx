@@ -176,23 +176,12 @@ export const DocumentDetailModal = ({ document, isOpen, onClose }: DocumentDetai
                   മലയാളം
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </div>
 
           {/* Date, Author, and Due Date */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1 text-slate-600">
-                <Calendar className="h-3 w-3" />
-                <span>{document.date}</span>
-              </div>
-              <div className="flex items-center space-x-1 text-slate-600">
-                <User className="h-3 w-3" />
-                <span>{document.author}</span>
-              </div>
             </div>
             {document.hasDeadline && document.deadlineDate && (
               <div className="flex items-center space-x-1 text-red-600">
